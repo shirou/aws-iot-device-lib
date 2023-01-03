@@ -183,8 +183,8 @@ func (client *Client) DescribeJobExecution(ctx context.Context, req DescribeJobE
 		}
 	}
 
-	if err = mqttutils.Subscribe(client.mc, topics, 0, callback); err != nil {
-		return
+	if err = mqttutils.Subscribe(client.mc, topics, 1, callback); err != nil {
+		return ret, err
 	}
 	defer func() {
 		close(accepted)
@@ -197,8 +197,8 @@ func (client *Client) DescribeJobExecution(ctx context.Context, req DescribeJobE
 		return
 	}
 	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/%s/get", *req.ThingName, *req.JobId)
-	if err = mqttutils.Publish(client.mc, pubTopic, 0, payload); err != nil {
-		return
+	if err = mqttutils.Publish(client.mc, pubTopic, 1, payload); err != nil {
+		return ret, err
 	}
 
 	for {
@@ -206,10 +206,10 @@ func (client *Client) DescribeJobExecution(ctx context.Context, req DescribeJobE
 		case r := <-accepted:
 			return r, nil
 		case err = <-rejected:
-			return
+			return ret, err
 		case <-ctx.Done():
 			err = ctx.Err()
-			return
+			return ret, err
 		}
 	}
 }
@@ -273,33 +273,4 @@ func (client *Client) UpdateJobExecution(ctx context.Context, req UpdateJobExecu
 			return
 		}
 	}
-}
-
-type JobExecutionsChangedHandler func()
-
-// JobExecutionsChanged sent whenever a job execution is added to or removed from the list of pending job executions for a thing.
-func (client *Client) JobExecutionsChanged(ctx context.Context, thingName string, handler JobExecutionsChangedHandler) (err error) {
-	topics := []string{fmt.Sprintf("$aws/things/%s/jobs/notify", thingName)}
-
-	callback := func(mc mqtt.Client, msg mqtt.Message) {
-		fmt.Println(msg.Topic())
-		fmt.Println(string(msg.Payload()))
-		handler()
-	}
-	if err = mqttutils.Subscribe(client.mc, topics, 0, callback); err != nil {
-		return
-	}
-	defer func() {
-		err = mqttutils.Unsubscribe(client.mc, topics)
-	}()
-
-	return
-}
-
-type NextJobExecutionChangedHandler func()
-
-// NextJobExecutionChanged sent whenever there is a change to which job execution is next on the list of pending job executions for a thing
-func (client *Client) NextJobExecutionChanged(ctx context.Context, handler NextJobExecutionChangedHandler) (err error) {
-
-	return
 }

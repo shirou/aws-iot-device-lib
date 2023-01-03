@@ -26,28 +26,13 @@ func IsError(payload []byte) error {
 	return fmt.Errorf(msg.Message)
 }
 
+type JobExecutions []JobExecution
 type JobExecutionsChangedMessage struct {
-	Timestamp int `json:"timestamp"`
-	Jobs      struct {
-		Queued []struct {
-			JobID           string `json:"jobId"`
-			QueuedAt        int    `json:"queuedAt"`
-			LastUpdatedAt   int    `json:"lastUpdatedAt"`
-			ExecutionNumber int    `json:"executionNumber"`
-			VersionNumber   int    `json:"versionNumber"`
-		} `json:"QUEUED"`
-	} `json:"jobs"`
+	Timestamp int                                  `json:"timestamp"`
+	Jobs      map[JobExecutionStatus]JobExecutions `json:"jobs"`
 }
 
 type NextJobExecutionChangedMessage struct {
-	Timestamp int `json:"timestamp"`
-	Execution struct {
-		JobID           string      `json:"jobId"`
-		Status          string      `json:"status"`
-		QueuedAt        int         `json:"queuedAt"`
-		LastUpdatedAt   int         `json:"lastUpdatedAt"`
-		VersionNumber   int         `json:"versionNumber"`
-		ExecutionNumber int         `json:"executionNumber"`
-		JobDocument     JobDocument `json:"jobDocument"`
-	} `json:"execution"`
+	Timestamp int          `json:"timestamp"`
+	Execution JobExecution `json:"execution"`
 }

@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iotjobsdataplane"
@@ -117,4 +118,61 @@ func UpdateJobExecution(cCtx *cli.Context) error {
 	}
 	fmt.Println(ret)
 	return nil
+}
+
+func JobExecutionsChanged(cCtx *cli.Context) error {
+	client, err := getJobsClient(cCtx)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+	callback := func(jcli *jobs.Client, msg jobs.JobExecutionsChangedMessage) error {
+		ctx := context.Background()
+		for _, job := range msg.Jobs[jobs.JobExecutionStatusQueued] {
+			req := jobs.DescribeJobExecutionInput{
+				ThingName: aws.String(cCtx.String("thing_name")), // ThingName in job is not filled.
+				JobId:     job.JobId,
+			}
+
+			fmt.Println("--------------------")
+			fmt.Println("DescribeJobExecution")
+			j, _ := jcli.DescribeJobExecution(ctx, req)
+			for _, step := range j.Execution.JobDocument.Steps {
+				fmt.Printf("step: %s\n", step.Action.Name)
+			}
+
+			fmt.Println("--------------------")
+			fmt.Println("UpdateJobExecution")
+			updateReq := jobs.UpdateJobExecutionInput{
+				ThingName: aws.String(cCtx.String("thing_name")),
+				JobId:     job.JobId,
+				Status:    types.JobExecutionStatus(jobs.JobExecutionStatusSucceeded),
+			}
+			if _, err := jcli.UpdateJobExecution(ctx, updateReq); err != nil {
+				fmt.Println(err)
+			}
+		}
+		return nil
+	}
+	go client.JobExecutionsChanged(ctx, cCtx.String("thing_name"), callback)
+
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+func NextJobExecutionChanged(cCtx *cli.Context) error {
+	client, err := getJobsClient(cCtx)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+	callback := func(client *jobs.Client, msg jobs.NextJobExecutionChangedMessage) error {
+		return nil
+	}
+	go client.NextJobExecutionChanged(ctx, cCtx.String("thing_name"), callback)
+
+	<-ctx.Done()
+	return ctx.Err()
 }

@@ -51,14 +51,13 @@ type DescribeJobExecutionInput struct {
 
 	// Optional. A number that identifies a particular job execution on a particular
 	// device. If not specified, the latest job execution is returned.
-	ExecutionNumber *int64 `json:"executionNumber"`
+	ExecutionNumber *int64 `json:"executionNumber,omitempty"`
 
 	// Optional. When set to true, the response contains the job document. The default
 	// is false.
-	IncludeJobDocument *bool `json:"includeJobDocument"`
+	IncludeJobDocument *bool `json:"includeJobDocument,omitempty"`
 
-	ClientToken string `json:"clientToken"`
-	Timestamp   int    `json:"timestamp"`
+	ClientToken string `json:"clientToken,omitempty"`
 }
 
 type DescribeJobExecutionOutput struct {

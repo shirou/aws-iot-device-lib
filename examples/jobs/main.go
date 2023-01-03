@@ -43,8 +43,17 @@ func main() {
 				Name:   "UpdateJobExecution",
 				Action: UpdateJobExecution,
 				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "status", Value: "FAILED"},
+					&cli.StringFlag{Name: "jobid", Required: true},
+					&cli.StringFlag{Name: "status", Value: "SUCCEEDED"},
 				},
+			},
+			{
+				Name:   "JobExecutionsChanged",
+				Action: JobExecutionsChanged,
+			},
+			{
+				Name:   "NextJobExecutionChanged",
+				Action: NextJobExecutionChanged,
 			},
 		},
 	}

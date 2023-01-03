@@ -28,5 +28,6 @@ func Subscribe(cli mqtt.Client, topics []string, qos int, callback mqtt.MessageH
 func Publish(cli mqtt.Client, topic string, qos int, payload []byte) error {
 	token := cli.Publish(topic, byte(qos), false, payload)
 	token.Wait()
+
 	return token.Error()
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iotjobsdataplane"
 	"github.com/aws/aws-sdk-go-v2/service/iotjobsdataplane/types"
 	"github.com/shirou/aws-iot-device-lib/examples/connect"
@@ -37,18 +36,19 @@ func getJobsClient(cCtx *cli.Context) (*jobs.Client, error) {
 }
 
 func DescribeJobExecution(cCtx *cli.Context) error {
+	fmt.Println("--------------------")
+	fmt.Println("DescribeJobExecution")
 	client, err := getJobsClient(cCtx)
 	if err != nil {
 		return err
 	}
+	thingName := cCtx.String("thing_name")
+	jobId := cCtx.String("jobid")
 
-	req := jobs.DescribeJobExecutionInput{
-		ThingName: aws.String(cCtx.String("thing_name")),
-		JobId:     aws.String(cCtx.String("jobid")),
-	}
+	req := jobs.DescribeJobExecutionInput{}
 
 	ctx := context.Background()
-	ret, err := client.DescribeJobExecution(ctx, req)
+	ret, err := client.DescribeJobExecution(ctx, thingName, jobId, req)
 	if err != nil {
 		return err
 	}
@@ -59,17 +59,18 @@ func DescribeJobExecution(cCtx *cli.Context) error {
 }
 
 func GetPendingJobExecutions(cCtx *cli.Context) error {
+	fmt.Println("--------------------")
+	fmt.Println("GetPendingJobExecutions")
 	client, err := getJobsClient(cCtx)
 	if err != nil {
 		return err
 	}
 
-	req := iotjobsdataplane.GetPendingJobExecutionsInput{
-		ThingName: aws.String(cCtx.String("thing_name")),
-	}
+	thingName := cCtx.String("thing_name")
+	req := iotjobsdataplane.GetPendingJobExecutionsInput{}
 
 	ctx := context.Background()
-	ret, err := client.GetPendingJobExecutions(ctx, req)
+	ret, err := client.GetPendingJobExecutions(ctx, thingName, req)
 	if err != nil {
 		return err
 	}
@@ -83,17 +84,18 @@ func GetPendingJobExecutions(cCtx *cli.Context) error {
 }
 
 func StartNextPendingJobExecution(cCtx *cli.Context) error {
+	fmt.Println("--------------------")
+	fmt.Println("StartNextPendingJobExecution")
 	client, err := getJobsClient(cCtx)
 	if err != nil {
 		return err
 	}
+	thingName := cCtx.String("thing_name")
 
-	req := iotjobsdataplane.StartNextPendingJobExecutionInput{
-		ThingName: aws.String(cCtx.String("thing_name")),
-	}
+	req := iotjobsdataplane.StartNextPendingJobExecutionInput{}
 
 	ctx := context.Background()
-	ret, err := client.StartNextPendingJobExecution(ctx, req)
+	ret, err := client.StartNextPendingJobExecution(ctx, thingName, req)
 	if err != nil {
 		return err
 	}
@@ -102,17 +104,18 @@ func StartNextPendingJobExecution(cCtx *cli.Context) error {
 }
 
 func UpdateJobExecution(cCtx *cli.Context) error {
+	fmt.Println("--------------------")
+	fmt.Println("UpdateJobExecution")
+
 	client, err := getJobsClient(cCtx)
 	if err != nil {
 		return err
 	}
 	req := jobs.UpdateJobExecutionInput{
-		ThingName: aws.String(cCtx.String("thing_name")),
-		JobId:     aws.String(cCtx.String("jobid")),
-		Status:    types.JobExecutionStatus(cCtx.String("status")),
+		Status: types.JobExecutionStatus(cCtx.String("status")),
 	}
 	ctx := context.Background()
-	ret, err := client.UpdateJobExecution(ctx, req)
+	ret, err := client.UpdateJobExecution(ctx, cCtx.String("thing_name"), cCtx.String("jobid"), req)
 	if err != nil {
 		return err
 	}
@@ -125,19 +128,19 @@ func JobExecutionsChanged(cCtx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	thingName := cCtx.String("thing_name")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	callback := func(jcli *jobs.Client, msg jobs.JobExecutionsChangedMessage) error {
 		ctx := context.Background()
 		for _, job := range msg.Jobs[jobs.JobExecutionStatusQueued] {
-			req := jobs.DescribeJobExecutionInput{
-				ThingName: aws.String(cCtx.String("thing_name")), // ThingName in job is not filled.
-				JobId:     job.JobId,
-			}
+			req := jobs.DescribeJobExecutionInput{}
 
 			fmt.Println("--------------------")
 			fmt.Println("DescribeJobExecution")
-			j, _ := jcli.DescribeJobExecution(ctx, req)
+			j, _ := jcli.DescribeJobExecution(ctx, thingName, *job.JobId, req)
 			for _, step := range j.Execution.JobDocument.Steps {
 				fmt.Printf("step: %s\n", step.Action.Name)
 			}
@@ -145,17 +148,16 @@ func JobExecutionsChanged(cCtx *cli.Context) error {
 			fmt.Println("--------------------")
 			fmt.Println("UpdateJobExecution")
 			updateReq := jobs.UpdateJobExecutionInput{
-				ThingName: aws.String(cCtx.String("thing_name")),
-				JobId:     job.JobId,
-				Status:    types.JobExecutionStatus(jobs.JobExecutionStatusSucceeded),
+				Status: types.JobExecutionStatus(jobs.JobExecutionStatusSucceeded),
 			}
-			if _, err := jcli.UpdateJobExecution(ctx, updateReq); err != nil {
+			if _, err := jcli.UpdateJobExecution(ctx, thingName, *job.JobId, updateReq); err != nil {
 				fmt.Println(err)
 			}
+			fmt.Println("success")
 		}
 		return nil
 	}
-	go client.JobExecutionsChanged(ctx, cCtx.String("thing_name"), callback)
+	go client.JobExecutionsChanged(ctx, thingName, callback)
 
 	<-ctx.Done()
 	return ctx.Err()
@@ -168,6 +170,7 @@ func NextJobExecutionChanged(cCtx *cli.Context) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
+
 	callback := func(client *jobs.Client, msg jobs.NextJobExecutionChangedMessage) error {
 		return nil
 	}

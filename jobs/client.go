@@ -29,10 +29,10 @@ type getPendingJobExecutionsRequest struct {
 }
 
 // GetPendingJobExecutions gets detailed information about a job execution.
-func (client *Client) GetPendingJobExecutions(ctx context.Context, req iotjobsdataplane.GetPendingJobExecutionsInput) (ret iotjobsdataplane.GetPendingJobExecutionsOutput, err error) {
+func (client *Client) GetPendingJobExecutions(ctx context.Context, thingName string, req iotjobsdataplane.GetPendingJobExecutionsInput) (ret iotjobsdataplane.GetPendingJobExecutionsOutput, err error) {
 	topics := []string{
-		fmt.Sprintf("$aws/things/%s/jobs/get/accepted", *req.ThingName),
-		fmt.Sprintf("$aws/things/%s/jobs/get/rejected", *req.ThingName),
+		fmt.Sprintf("$aws/things/%s/jobs/get/accepted", thingName),
+		fmt.Sprintf("$aws/things/%s/jobs/get/rejected", thingName),
 	}
 
 	accepted := make(chan iotjobsdataplane.GetPendingJobExecutionsOutput)
@@ -68,7 +68,7 @@ func (client *Client) GetPendingJobExecutions(ctx context.Context, req iotjobsda
 		err = mqttutils.JoinErrors(err, mqttutils.Unsubscribe(client.mc, topics))
 	}()
 
-	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/get", *req.ThingName)
+	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/get", thingName)
 	payload, err := json.Marshal(req)
 	if err != nil {
 		return
@@ -91,10 +91,10 @@ func (client *Client) GetPendingJobExecutions(ctx context.Context, req iotjobsda
 }
 
 // StartNextPendingJobExecution gets and starts the next pending job execution for a thing
-func (client *Client) StartNextPendingJobExecution(ctx context.Context, req iotjobsdataplane.StartNextPendingJobExecutionInput) (ret StartNextPendingJobExecutionOutput, err error) {
+func (client *Client) StartNextPendingJobExecution(ctx context.Context, thingName string, req iotjobsdataplane.StartNextPendingJobExecutionInput) (ret StartNextPendingJobExecutionOutput, err error) {
 	topics := []string{
-		fmt.Sprintf("$aws/things/%s/jobs/start-next/accepted", *req.ThingName),
-		fmt.Sprintf("$aws/things/%s/jobs/start-next/rejected", *req.ThingName),
+		fmt.Sprintf("$aws/things/%s/jobs/start-next/accepted", thingName),
+		fmt.Sprintf("$aws/things/%s/jobs/start-next/rejected", thingName),
 	}
 
 	accepted := make(chan StartNextPendingJobExecutionOutput)
@@ -130,7 +130,7 @@ func (client *Client) StartNextPendingJobExecution(ctx context.Context, req iotj
 		err = mqttutils.JoinErrors(err, mqttutils.Unsubscribe(client.mc, topics))
 	}()
 
-	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/start-next", *req.ThingName)
+	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/start-next", thingName)
 	payload, err := json.Marshal(req)
 	if err != nil {
 		return
@@ -153,10 +153,10 @@ func (client *Client) StartNextPendingJobExecution(ctx context.Context, req iotj
 }
 
 // DescribeJobExecution gets detailed information about a job execution.
-func (client *Client) DescribeJobExecution(ctx context.Context, req DescribeJobExecutionInput) (ret DescribeJobExecutionOutput, err error) {
+func (client *Client) DescribeJobExecution(ctx context.Context, thingName string, jobId string, req DescribeJobExecutionInput) (ret DescribeJobExecutionOutput, err error) {
 	topics := []string{
-		fmt.Sprintf("$aws/things/%s/jobs/%s/get/accepted", *req.ThingName, *req.JobId),
-		fmt.Sprintf("$aws/things/%s/jobs/%s/get/rejected", *req.ThingName, *req.JobId),
+		fmt.Sprintf("$aws/things/%s/jobs/%s/get/accepted", thingName, jobId),
+		fmt.Sprintf("$aws/things/%s/jobs/%s/get/rejected", thingName, jobId),
 	}
 
 	accepted := make(chan DescribeJobExecutionOutput)
@@ -196,7 +196,7 @@ func (client *Client) DescribeJobExecution(ctx context.Context, req DescribeJobE
 	if err != nil {
 		return
 	}
-	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/%s/get", *req.ThingName, *req.JobId)
+	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/%s/get", thingName, jobId)
 	if err = mqttutils.Publish(client.mc, pubTopic, 1, payload); err != nil {
 		return ret, err
 	}
@@ -214,10 +214,10 @@ func (client *Client) DescribeJobExecution(ctx context.Context, req DescribeJobE
 	}
 }
 
-func (client *Client) UpdateJobExecution(ctx context.Context, req UpdateJobExecutionInput) (ret iotjobsdataplane.UpdateJobExecutionOutput, err error) {
+func (client *Client) UpdateJobExecution(ctx context.Context, thingName string, jobId string, req UpdateJobExecutionInput) (ret iotjobsdataplane.UpdateJobExecutionOutput, err error) {
 	topics := []string{
-		fmt.Sprintf("$aws/things/%s/jobs/%s/update/accepted", *req.ThingName, *req.JobId),
-		fmt.Sprintf("$aws/things/%s/jobs/%s/update/rejected", *req.ThingName, *req.JobId),
+		fmt.Sprintf("$aws/things/%s/jobs/%s/update/accepted", thingName, jobId),
+		fmt.Sprintf("$aws/things/%s/jobs/%s/update/rejected", thingName, jobId),
 	}
 
 	accepted := make(chan iotjobsdataplane.UpdateJobExecutionOutput)
@@ -257,7 +257,7 @@ func (client *Client) UpdateJobExecution(ctx context.Context, req UpdateJobExecu
 	if err != nil {
 		return
 	}
-	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/%s/update", *req.ThingName, *req.JobId)
+	pubTopic := fmt.Sprintf("$aws/things/%s/jobs/%s/update", thingName, jobId)
 	if err = mqttutils.Publish(client.mc, pubTopic, 0, payload); err != nil {
 		return
 	}

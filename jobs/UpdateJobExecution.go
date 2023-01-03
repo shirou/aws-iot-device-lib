@@ -6,22 +6,11 @@ package jobs
 import "github.com/aws/aws-sdk-go-v2/service/iotjobsdataplane/types"
 
 type UpdateJobExecutionInput struct {
-
-	// The unique identifier assigned to this job when it was created.
-	//
-	// This member is required.
-	JobId *string `json:"-"`
-
 	// The new status for the job execution (IN_PROGRESS, FAILED, SUCCESS, or
 	// REJECTED). This must be specified on every update.
 	//
 	// This member is required.
 	Status types.JobExecutionStatus `json:"status"`
-
-	// The name of the thing associated with the device.
-	//
-	// This member is required.
-	ThingName *string `json:"-"`
 
 	// Optional. A number that identifies a particular job execution on a particular
 	// device.

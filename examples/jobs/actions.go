@@ -148,7 +148,7 @@ func JobExecutionsChanged(cCtx *cli.Context) error {
 			fmt.Println("--------------------")
 			fmt.Println("UpdateJobExecution")
 			updateReq := jobs.UpdateJobExecutionInput{
-				Status: types.JobExecutionStatus(jobs.JobExecutionStatusSucceeded),
+				Status: types.JobExecutionStatus(jobs.JobExecutionStatusFailed),
 			}
 			if _, err := jcli.UpdateJobExecution(ctx, thingName, *job.JobId, updateReq); err != nil {
 				fmt.Println(err)

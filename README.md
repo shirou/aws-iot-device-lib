@@ -8,6 +8,8 @@ Currently implemented API.
 
 - AWS IoT Jobs
 
+Go 1.18 or later version is required because of generics.
+
 ## AWS IoT Jobs
 
 The API is implemented according to [AWS IoT Jobs device MQTT API](https://docs.aws.amazon.com/iot/latest/developerguide/jobs-mqtt-api.html).
